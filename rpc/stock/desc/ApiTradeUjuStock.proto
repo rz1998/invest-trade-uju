@@ -1,0 +1,1062 @@
+syntax = "proto3";
+package tradeStock;
+option go_package = "./tradeStock";
+
+message WCMessage {
+    // 消息投
+    Header header = 1;
+    // 业务请求消息
+    ReqMessage reqMessage =2;
+    // 登录请求消息
+    LoginReqMessage loginReqMessage = 3;
+    // 登录返回消息
+    LoginRespMessage loginRespMessage =4;
+    // 业务返回消息
+    RespMessage respMessage=5;
+	  // 返回错误消息
+  ErrorMessage errorMessage=6;
+}
+//异常消息
+message ErrorMessage {
+  //0正常
+  int32  errorId = 1;
+  string message = 2;
+
+}
+message Header{
+    int32 crcCode = 1;  //netty消息校验码 主版本号 次版本号
+	int32 childId = 2;  // 用户标识
+	string uuid=5;//用于每次会话标记jar包客户端使用
+	enum Type {
+	    SERVICE_REQ = 0;    // 业务请求消息
+		SERVICE_RESP = 1;   // 业务响应消息
+		ONE_WAY = 2;        // 业务 ONE WAY消息，既是请求消息，又是响应消息
+		LOGIN_REQ =3;       // 登录请求
+		LOGIN_RESP =4;      // 登录响应
+		HEARTBEAT_REQ =5;   // 心跳请求消息
+		HEARTBEAT_RESP =6;  // 心跳响应消息
+	}   
+	Type type = 4;
+}
+
+// 登录请求消息
+message LoginReqMessage {
+   // 用户名
+   string username = 1;
+   // 密码
+   string passwd = 2;
+   // 验证码
+   string verCode = 3;
+   // token 
+   string token = 4;
+   // 公司id
+   string companyId = 5;
+}
+
+// 登录返回消息
+message LoginRespMessage {
+   LoginResult loginResult = 1;
+   string userId = 2;
+   enum LoginResult {
+       SUCCESS =0;
+	   // 用户名或者密码不正确
+	   FAIL =1;
+	   // 验证码不正确
+	   VERCODENOTFIT=3;
+	    // 挤下线，已退出登录
+	   EDGE_OUT=4;
+	   NO_USER=5;//没有这个用户
+	   
+		TOO_MANY_CLIENTS = 6;//太多客户端
+		
+		FROZEN = 7;//该账号已冻结，不能登录
+   }
+   repeated AccountInfoResp accountInfoResp =4;
+}
+
+
+// 业务请求消息
+message ReqMessage
+{
+	enum ReqMsgType {
+	    STOCK_QRY = 0;    // 搜索股票
+		ACOUNT_INFO_QRY =1; // 账户信息查询
+		POSITION_QRY=2; // 持仓查询
+		ENTRUST_QRY =3; // 委托查询
+		DEAL_QRY =4; // 成交查询
+		STATEMENT_QRY=5; //对账单查询
+		ORDER=6;//下单
+		CANCELORDER=7;//撤单
+		POSITION_CHANGE=8;//持仓有变动
+		DEAL_RESP = 9;//成交回报
+		ORDER_CONFIRM_RESP = 10;//下单确认
+		CANCEL_ORDER_CONFIRM_RESP = 11;//撤单确认
+		Client_POSITION_QRY=12; //客户 持仓查询
+		Client_ENTRUST_QRY =13; //客户 委托查询
+		Client_DEAL_QRY =14; //客户 成交查询
+		T0_Profit_Statistics=15;//利润统计
+		T0_Position_Usable = 16;//可用股数
+		Push_Order = 17;//推送订单变化
+		Push_Accountinfo = 18;//推送账户信息
+		Add_Opt = 19;//新增自选股
+		Delete_Opt = 20;//删除自选股
+		Opt_Qry  = 21;//查询自选股
+		Change_Remark = 22; // 修改子账户备注
+		CANCELORDER_BATCH = 23;//批量撤单
+		Modify_Opt_Remark = 24;//修改备注
+		Push_CommissionTemplate = 25;//推送手续费率模板
+		BATCH_ORDER=26;//批量 下单
+		CONDITION_ORDER_LIST = 27;// 条件单列表（未触发）
+		CONDITION_ORDER_LIST_TRIGGERED = 28;// 已触发 条件单列表 
+		CONDITION_ORDER_LIST_EXPIRED = 29;//已过期 条件单列表
+		CONDITION_ORDER_ADD = 30;// 添加条件单
+		CONDITION_ORDER_MODIFY = 31;// 编辑条件单
+		CONDITION_ORDER_CHANGE_STATUS = 32;//修改运行状态 
+		CONDITION_ORDER_DELETE = 33; //删除条件单
+		PUSH_CONDITION_ORDER_TRIGGER = 34; //推送 条件单触发
+		CONDITION_ORDER_CONFIRM = 35;//手动确认下单
+		CHANGE_PASSWORD = 36;//修改密码
+		QUERY_HK_STOCK_INFO=37;//获取港股基本信息
+		QUERY_CONSULT_EXCHANGE_RATE=38;//获取交易所买卖汇率
+		
+	} 
+	
+	
+	ReqMsgType type = 1;   // 请求类型
+	string stockCode = 2;   // 股票代码
+	string userId =3; //子账号标识
+	string beginTime=4 ; // 查询起始时间
+	string endTime=5 ; // 查询起始时间
+	OrderReq orderReq=6 ; // 下单请求报文
+	string localOrderCode=7 ;// 本地报单编号
+	AddOptReq addOptReq=8;//添加自选请求
+	DeleteOptReq deleteOptReq=9;//删除自选请求
+	RemarkReq remarkReq = 10; //修改备注请求
+	repeated string localOrderCodeList = 11;//批量撤单 入参
+	ModifyOptRemarkReq modifyOptRemarkReq = 12;//修改自选备注
+	repeated OrderReq batchOrder = 13;//批量下单
+	ConditionOrderAddReq conditionOrderAddReq = 14;// 添加/修改  条件单请求
+	ConditionOrderChangeStatusReq conditionOrderChangeStatusReq = 15;//修改条件单状态 （批量）
+	ConditionOrderDeleteReq conditionOrderDeleteReq = 16;//删除条件单（批量）
+	ConditionOrderConfirmReq ConditionOrderConfirmReq = 17;//条件单 确认 
+	ChangePasswordReq changePasswordReq = 18;//修改密码
+}
+
+// 业务消息返回  
+message RespMessage {
+    enum RespCode {
+	    OK = 0;
+	    FAIL = 1;    // 失败
+    } 
+	
+   int32 ReqMsgType = 1;//业务类型
+    RespCode respCode = 2;//是否成功
+   repeated StockQryResp stockQryResp = 3;// 股票查询 响应信息
+   repeated PositionInfoResp positionInfoResp=4;//持仓查询 响应信息
+   repeated AccountInfoResp accountInfoResp =5; //账户资金 响应信息
+   repeated EntrustInfoResp etrustInfoResp =6;//委托查询 响应信息
+   repeated DealInfoResp dealInfoResp =7; // 成交查询 响应信息
+   repeated StatementInfoResp statementInfoResp =8;
+   
+   CancelOrderResp cancelOrderResp=9;//撤单回报
+   OrderResp orderResp=10;//下单回报
+   DealResp dealResp = 11;//成交回报
+   OrderConfirmResp orderCnfmResp = 12;//废弃
+   CancelOrderConfirmResp cancelOrderCnfmResp = 13;//废弃
+   T0PositionStatisticsResp t0PositionStatisticsResp = 14;//客户持仓
+   repeated T0UsablePositionResp t0UsablePositionResp = 15;//t0 可用持仓
+   T0ProfitStatisticsResp t0ProfitStatisticsResp = 16;//t0 收益统计
+   PositionInfoResp pushPositionInfoResp = 17;//推送 持仓变动
+   EntrustInfoResp pushEntrustInfoResp = 18;//委托状态变动
+   AccountInfoResp pushAccountInfoResp = 19;//推送的账户信息
+   string errorMessage = 20;//错误信息（通用）
+   repeated OptResp optResp = 21; //自选股 列表
+   repeated CancelOrderResp batchCancelOrderResp = 22;//批量撤单回报
+   PushCommissionTemplate pushCommissionTemplate = 23;//推送手续费率模板
+   BatchOrderResp batchOrderResp=24;//批量下单回报
+   
+   repeated ConditionOrder conditionOrderList = 25;//条件单列表 （未触发、已触发、已过期）
+   
+   ConditionOrderAddResp conditionOrderAddResp = 26;//条件单  添加 / 修改 响应
+   
+	ConditionOrderChangeStatusResp conditionOrderChangeStatusResp = 27;//修改条件单状态 （批量）
+	
+	ConditionOrderDeleteResp conditionOrderDeleteResp = 28;//删除条件单（批量）
+	
+	PushConditionOrderTriggerd pushConditionOrderTriggerd = 29;//条件单 触发 推送
+
+	ConditionOrderConfirmResp ConditionOrderConfirmResp = 30;//条件单 确认 
+	//港股基本信息
+	repeated HkStockInfoFieldResp stockInfoFieldResp=31;
+	//汇率数据
+	HkConsultExchangeRateFieldResp hkConsultExchangeRateFieldResp=32;
+}
+
+// 股票查询消息返回
+message StockQryResp
+{
+   // 股票代码
+   string stocks = 1;
+   // 股票名字
+   string name =2;
+   // 总股本
+   string totalCapital =3;
+   // 流通股本
+   string flowCapital =4;
+      //交易所编码
+   string exchange =5;
+}
+
+// 账号信息查询
+message AccountInfoResp
+{
+   // 子账号
+   string childAccount = 1;
+   // 总成本
+   string totalCost = 2;
+   // 可用资金
+   string availableFunds =3;
+   // 子账号
+   string childId = 4;
+   // 余额（A股余额）
+   string funds =5;
+   //总资产
+   string totalAssets = 6;
+   //t0 类型  0 t0 ， 1 t1;
+   string t0Type = 7 ;
+   //备注
+   string remark = 8;
+   //手续费率模板  只有登录的时候才有这个数据
+   repeated CommissionTemplate commissionTemplate = 9;
+
+      // 港股可用资金
+   string availableFundsHk=10;
+  //待交收金额  ；可用于计算冻结如：冻结=（余额+待交收金额）-（港股股可用）
+
+  string deliveryAmount=11;
+  //true  代表HK有交易权限，FALSE 没有交易权限
+   bool  isOtherTrade=12;
+   
+}
+
+// 持仓信息查询
+message PositionInfoResp
+{
+   // 股票代码
+   string stocks = 1;
+   // 股票名字
+   string name =2;
+   // 总持仓数
+   string totalPosition=3;
+   // 可卖数量
+   string canSell = 4;
+   // 成本价
+   string costPrice =5;
+   //上一个开盘交易日收盘价
+   string closePrice =6;
+   
+   string childAccount =7;//子账户编号
+   int32 childId =8;//子账户id
+   string lastPrice = 9;//最新价
+   string suffix = 10;//交易所
+   
+   double costAmount = 11;//成本金额
+   int32 initNumber = 12;//初始股数
+   string preTotalProfit = 13; //上一日 总盈亏
+   string floatCapital = 14;//用于计算当日盈亏比例的分母
+   string todayProfit = 15;//当日盈亏
+   string todayProfitRate = 16;//当日盈亏比例
+   int32 startTotalNumber = 17;// 开盘时 昨日剩余数量
+   string startBuyTotalAmount = 18;//开盘时 成本金额
+   //港币成本
+   double buyTotalAmountHk=19;
+   //人民币成本
+   double buyTotalAmountRmb=20;
+      //交易市场
+   TradeExchangeType  exchangeType=21;
+       //交易市场名称
+   string exchangeTypeText=22;
+   //港币成本
+   string costPriceHk =23;
+}
+
+// 委托查询返回信息
+message EntrustInfoResp
+{
+
+   // 委托时间
+   string time =1;
+   
+   // 委托代码
+   string entrustCode=2;
+   // 代码名称
+   string stockCode=3;
+   // 买卖
+   EntrustType entrustType=4;
+   // 委托数量
+   string entrustNum=5;
+   // 成交数量
+   string dealNum=6;
+   // 委托价格
+   string entrustPrice=7;
+   // 成交均价
+   string  averageTransactionPrice=8;
+   // 状态
+   string status=9;
+   // 委托编号
+   string entrustNo=10;
+   string localOrderCode=11 ;// 本地报单编号
+   string exchange = 12 ;// 交易所 SH SZ
+   string dealAmount = 13;// 成交金额
+   string canceledNum = 14;//撤单数目
+   string cost = 15;//手续费
+   string childAccount =16;//子账户编号
+   int32 childId =17;//子账户id
+   //交易市场
+   TradeExchangeType  exchangeType=18;
+   //a股账户冻结
+   double frozenAmount=19;
+    //交易市场名称
+   string exchangeTypeText=20;
+   
+   enum EntrustType{
+	    buy = 0;
+	    sell = 1;    
+   } 
+   
+   enum EntrustStatus{
+	  
+      qbcj = 0; //0、全部成交 
+	  bfcj = 1; //1，部分成交, 
+	  bfcd = 2; //2、部分撤单 
+	  ysb = 3 ; //3、已申报
+	  wsb = 4 ; //4、未申报 
+	  cd = 5 ;  //5、撤单 
+	  wz = 6 ;  //a、未知
+	  wcf = 7 ; //b、未触发 
+	  ycf = 8 ; //c、已触发
+	  applying = -1;//申请中
+   }
+}
+ 
+//（类型（0、上证、1、深圳2、港股、3、深港通4、沪港通、5、沪深股通（港股购买A股）））
+ enum TradeExchangeType{
+ //上证(a股)
+	   SH = 0;  
+	   //深圳 (a股)
+	  SZ = 1; 
+	   //2、港股、
+	  HShare = 2;
+	  //3、深港通
+	  SZ_HK_STOCK_CONNECT = 3 ; 
+	  //4、沪港通
+	  SH_HK_STOCK_CONNECT = 4 ;
+	  //5、沪深股通（港股购买A股）陆股通
+	  HK_ASHARES_STOCK_CONNECT = 5 ; 
+	 
+   }
+
+
+// 成交查询
+message DealInfoResp
+{
+  enum DealType{
+	    buy = 0;
+	    sell = 1;    
+   } 
+  string time =1; //成交时间 
+  string stockCode =2;//代码 
+  string name =3;//名称 
+  DealType dealType =4; //买卖 
+  string dealNum =5;//成交数量 
+  string averageDealPrice=6;//成交均价 
+  string amount=7; //成交金额 
+  string dealCode=8; //成交编号
+  string childAccount =9;//子账户编号
+  int32 childId =10;//子账户id
+  string entrustNo =11;//委托编号
+  string localOrderCode = 12;//委托单的本地订单号
+  string suffix = 13;//交易所代码
+     //交易市场
+   TradeExchangeType  exchangeType=14;
+   
+    //人民币 印花税 
+   double stampTaxRmb=15;
+   //港币 印花税
+   double stampTaxHk=16;
+   //港股交易费 人民币
+   double transactionFeeRmb=17;
+   //港股交易费 港币
+   double transactionFeeHk=18;
+      //港股交易系统使用费 人民币
+   double systemRoyaltiesRmb=19;
+      //港股交易系统使用费 港币
+   double systemRoyaltiesHk=20;
+      //交易征费  人民币
+   double transactionLevyRmb=21;
+      //交易征费  港币
+   double transactionLevyHk=22;
+   //股份交收费 人民币
+   double sharePaymentFeeRmb=23;
+   
+      //股份交收费 港币
+   double sharePaymentFeeHk=24;
+     //财汇局交易征费 人民币
+   double financeTransactionLevyRmb=25;
+     //财汇局交易征费 港币
+   double financeTransactionLevyHk=26;
+   //投资者赔偿征费 人民币
+   double compensationLevyRmb=27; 
+   //投资者赔偿征费  港币
+   double compensationLevyHk=28;
+
+   //投资者赔偿征费  人民币
+   double specialLevyRmb=29;
+   //投资者赔偿征费  港币
+   double specialLevyHk=30;
+      //佣金  人民币
+   double commissionRmb=31;
+   //佣金  港币
+   double commissionHk=32;
+       //交易市场名称
+   string exchangeTypeText=33;
+}
+
+
+// 对账单查询
+message StatementInfoResp
+{
+  enum StatementType{
+	    buy = 0;
+	    sell = 1;    
+  } 
+  string time = 1; //时间 
+  string code =2;//代码 
+  string name =3;//名称 
+  StatementType statementType =4;//买卖 
+  string dealNum =5;//成交数量 
+  string averageDealPrice=6;//成交均价 
+  string amount=7; //成交金额 
+  string serviceCharge=8;//手续费 
+  string residual =9 ; //剩余金额 
+  string dealCode=10; //成交编号
+  string childAccount =11;//子账户编号
+  int32 childId =12;//子账户id
+}
+
+// 下单请求
+message OrderReq
+{
+  enum OrderType{
+	    buy = 0;
+	    sell = 1;    
+  } 
+  
+  
+  string stockCode=1;//股票代码
+  string num=2;		//数目
+  string price=3;	//价格
+  OrderType orderType=4; //买卖类型
+  string localOrderCode =5; //本地订单号 唯一
+  string exchange =6;	//交易所 上交所  SH，深交所  SZ
+  PassiveOrderInfo passiveOrderInfo = 7;//不用写
+  string orderSource = 8;
+  string sourceId = 9;
+     //交易市场
+   string  exchangeType=10;
+   HkPriceType hkPriceType=11;
+   
+}
+
+enum HkPriceType{
+	 //报价类型：增强限价
+	 enhance_price =0;
+	 //、竞价限价
+	 bidding_price =1; 
+	 //、碎股卖出
+	 fragmentary_stock  =2; 
+}
+	
+
+//被动式下单 一些信息
+message PassiveOrderInfo{
+
+	enum OrderFlag{
+		undefined = 0;
+		normal = 1;
+		passive = 2;
+	}
+
+	string dayStopLoss = 1;
+	string totalStopLoss = 2;
+	string dayStopProfit = 3;
+	string totalStopProfit = 4;
+	string closePositionId = 5;
+	string runNumber = 6;
+	string amount = 7;
+	string orderTime = 8;
+	string taskTimeNumber = 9;
+	string proportion = 10;
+	string taskTime = 11;
+	OrderFlag orderFlag = 12;
+}
+
+
+// 下单请求返回
+message OrderResp
+{
+	enum OrderRespType{
+	    success = 0;
+	    fail = 1; 
+		number_errror=2;//数量不正确必须大于0且被100整除
+		code_error=3;//code不存在或不在范围内
+		local_error=4;//本地编码错误
+		account_error=5;//子账户错误
+		position_over_error=6;//超出持仓数
+		position_no_error=7;//无持仓可以卖
+		no_amount=8;//金额不足，
+   }
+   OrderRespType orderRespType =1;
+   string localOrderCode = 2; //本地订单号
+   string message=3; //错误信息
+   EntrustBasicInfo entrustBasicInfo=4;
+}
+
+//下单确认
+message OrderConfirmResp{
+	OrderResp.OrderRespType orderRespType = 1;
+	EntrustBasicInfo entrustBasicInfo=2;
+}
+
+// 撤单
+message CancelOrderResp
+{
+    string localOrderCode = 1;
+    CancelOrderType cancelOrderType  = 2;
+	   enum CancelOrderType{
+	    success = 0;
+	    fail = 1;    
+	}
+   EntrustBasicInfo entrustBasicInfo=3;
+}
+
+//撤单确认
+message CancelOrderConfirmResp{
+	OrderResp.OrderRespType orderRespType = 1;
+	EntrustBasicInfo entrustBasicInfo=2;
+}
+
+message EntrustBasicInfo
+{
+
+   string exchange = 1 ;// 交易所 SH SZ
+   // 代码名称
+   string stockCode=2;
+   // 买卖
+   EntrustType entrustType=3;
+   // 委托数量
+   string entrustNum=4;
+   // 委托价格
+   string entrustPrice=5;
+   // 本地报单编号
+   string localOrderCode=6 ;
+   // 委托时间
+   string time =7;
+   // 状态
+   string status=8;
+   
+   // 撤单时间时间
+   string cancelTime =9;
+   //已撤单数目
+   string canceledNum = 10;
+   //成交数目
+   string dealNum = 11;
+   //成交金额
+   string dealAmount = 12;
+   //累计交易费用
+   string cost = 13;
+
+   enum EntrustType{
+	    buy = 0;
+	    sell = 1;    
+   } 
+   
+}
+
+//成交回报
+message DealResp{
+	string exchange = 1 ;// 交易所 SH SZ
+	
+	OrderType orderType = 2 ;// 买卖类型
+	
+	string stockCode = 3; //证券代码
+	
+	string trdDate = 4;//交易日期
+	
+	string trdTime = 5;//交易时间
+	
+	string dealNum = 6;//成交数量
+	
+	string dealPrice = 7;//成交价格
+	
+	string dealAmount = 8;//成交金额
+	
+	string totalDealNum = 9;//累计成交数量
+	
+	string totalDealAmount = 10;//累计成交金额
+	
+	string averageDealPrice = 11;//成交均价
+	
+	string totalCost = 12;//累计交易费用
+	
+	string dealNo = 13;//成交编号
+	
+	string status = 14; //委托单的状态  同 EntrustBasicInfo 的状态
+	
+	string localOrderCode = 15;//委托单的本地订单号
+	
+	string entrustNo = 16;//委托单编号
+	
+	string name = 17; //股票代码
+	
+	enum OrderType{
+	    buy = 0;
+	    sell = 1;    
+	}
+	      //交易市场
+   TradeExchangeType  exchangeType=18;
+   
+    //人民币 印花税 
+   double stampTaxRmb=19;
+   //港币 印花税
+   double stampTaxHk=20;
+   //港股交易费 人民币
+   double transactionFeeRmb=21;
+   //港股交易费 港币
+   double transactionFeeHk=22;
+      //港股交易系统使用费 人民币
+   double systemRoyaltiesRmb=23;
+      //港股交易系统使用费 港币
+   double systemRoyaltiesHk=24;
+      //交易征费  人民币
+   double transactionLevyRmb=25;
+      //交易征费  港币
+   double transactionLevyHk=26;
+   //股份交收费 人民币
+   double sharePaymentFeeRmb=27;
+   
+      //股份交收费 港币
+   double sharePaymentFeeHk=28;
+     //财汇局交易征费 人民币
+   double financeTransactionLevyRmb=29;
+     //财汇局交易征费 港币
+   double financeTransactionLevyHk=30;
+   //投资者赔偿征费 人民币
+   double compensationLevyRmb=31; 
+   //投资者赔偿征费  港币
+   double compensationLevyHk=32;
+
+   //投资者赔偿征费  人民币
+   double specialLevyRmb=33;
+   //投资者赔偿征费  港币
+   double specialLevyHk=34;
+      //佣金  人民币
+   double commissionRmb=35;
+   //佣金  港币
+   double commissionHk=36;    
+    //交易市场名称
+   string exchangeTypeText=37;   
+}
+
+message T0PositionStatisticsResp{
+	repeated T0PositionInfoResp positionInfo = 1;//持仓信息
+	double totalPositionValue = 2;//持仓市值
+	double totalPositionProfit = 3;//持仓盈亏
+	double t0Profit = 4;//t0 盈亏
+}
+
+// 持仓信息查询
+message T0PositionInfoResp
+{
+   // 股票代码
+   string stocks = 1;
+   // 股票名字
+   string name =2;
+   // 总持仓数
+   int32 totalPosition=3;
+   // 可卖数量
+   int32 canSell = 4;
+   // 成本价
+   double costPrice =5;
+   //上一个开盘交易日收盘价
+   double closePrice =6;
+   
+   string childAccount =7;//子账户编号
+   int32 childId =8;//子账户id
+   double totalDealAmount = 9;//总成交金额
+   double t0profitRate = 10;// t0浮盈比例
+   double t0profit = 11; //t0 盈亏
+   double initPrice = 12;//t0 初始价格
+   double lastPrice = 13;//当前价
+   string suffix = 14;
+   double costAmount = 15;//成本金额
+   int32 initNumber = 16;//初始股数
+
+   
+}
+
+message T0UsablePositionResp{
+	// 股票代码
+   string stocks = 1;
+   // 股票名字
+   string name =2;
+   // 总持仓数
+   int32 totalPosition=3;
+    // 可卖数量	
+   int32 canSell = 4;
+   int32 canBuy = 5;//可买数目
+   string childAccount =6;//子账户编号
+   int32 childId =7;//子账户id
+   string suffix = 8;//上交所 SH , 深交所 SZ
+}	
+
+
+message T0ProfitStatisticsResp{
+	repeated T0PositionProfitStatisticsResp positionProfitResp = 1;//持仓盈亏统计
+	double totalDealAmount = 2;//总交易额
+	double t0TotalProfit = 3;//t0 总盈亏
+	double todayDealAmount = 4;//当日总交易额
+	double t0TodayProfit = 5;//当日盈亏
+}
+
+message T0PositionProfitStatisticsResp{
+   // 股票代码
+   string stocks = 1;
+   // 股票名字
+   string name =2;
+   double t0profitRate = 3;// t0浮盈比例
+   double t0profit = 4; //t0 盈亏
+   string childAccount =5;//子账户编号
+   int32 childId =6;//子账户id
+   int32 dealCount = 7;//交易笔数
+   double buyAmount = 8;//买入金额
+   double sellAmount = 9;//卖出金额
+   double cost = 10;//手续费
+   int32 totalDealNumber = 11;//总成交股数
+   string suffix = 12;//交易所
+   double t0TodayProfitRate = 13;//当日  t0浮盈比例
+   double t0TodayProfit = 14; //当日 t0 盈亏
+   int32 todayDealCount = 15;//当日交易笔数
+   double todayBuyAmount = 16;//当日买入金额
+   double todaySellAmount = 17;//当日卖出金额
+   double todayCost = 18;//当日手续费
+   int32 todayDealNumber = 19;//当日成交股数
+}
+	
+message AddOptReq{
+	string code = 1;//000001.SZ
+}
+
+message DeleteOptReq{
+	string code = 1;//000001.SZ
+}
+
+message ModifyOptRemarkReq{
+	string code = 1;//000001.SZ
+	string remark = 2;//备注
+}
+
+//自选对象
+message OptResp{
+
+	string code = 1;
+
+	string name = 2;
+
+	//现价
+	string lastPrice = 3;
+
+	//涨跌=昨收-现价
+	string change = 4;
+
+	//涨跌幅=涨跌/昨收
+	string changeLimit =5;
+
+	//最高价
+	string highPrice =6;
+
+	//最低价
+	string lowPrice =7;
+
+	//昨收
+	string preClose =8;
+
+	//成交额
+	string turnoverValue =9;
+
+	//成交量
+	string turnoverVol =10;
+
+	//昨结算
+	string preSettlementPrice =11;
+	
+	//备注
+	string remark = 12;
+	
+	//总股本
+	string totalStock = 13;
+	
+	//流通股本
+	string floatStock = 14;
+	
+}
+
+//修改子账户备注
+message RemarkReq{
+	string remark = 1;
+}
+
+//手续费率模板
+message CommissionTemplate{
+	string commissionRate = 1; //佣金费率
+	string commissionMin = 2;  //最低佣金
+	string stampDuty = 3; //印花税  只有卖出时才收
+	string transferFee = 4;//过户费  只有上交所收
+	int32 stockType = 5;//  证券类型  1：股票   2： 可转债  3:逆回购  4:基金  5:lof基金  6:融资融券  7:etf期权
+	string accountId = 6;// 账户id
+	int32 exchange = 7;//0：上交所    1：深交所
+	string financingRate = 8;   //融资利息
+	string marginRate = 9;   //融券费率
+	string settleFee = 10;   //交易结算费  期权
+	string handingFee = 11;   //交易经手费  期权
+	string exerciseFee = 12;  //行权手续费  期权
+}
+
+//推送 手续费率变动
+message PushCommissionTemplate{
+	int32 subAccountId = 1;
+	repeated CommissionTemplate commissionTemplate= 2;
+}
+
+//条件单 实体
+message ConditionOrder{
+	
+	int32 id = 1; 
+	
+    string stockCode = 2; //股票代码 
+	
+	string suffix = 3; //交易所代码 
+	
+	int32 subAccountId = 4; //操作账号id
+
+	int32 tClientId = 5; //交易员id
+	
+	int32 orderType = 6;//下单类型  0：买入  1：卖出
+
+	int32 runStatus = 7;// 运行状态  1：运行中  2：已暂停  3：已触发  4：已过期
+
+	int32 triggerType = 8;// 触发类型  1：涨幅条件  2：股价条件  3：反弹买入  4：定时  5：涨停买入  6：止盈止损
+
+	string triggerCondition = 9; // 触发条件
+
+	string triggerConditionDesc = 10; // 触发条件描述
+
+	int32 triggerExecType = 11;//  触发后 操作方式  0：手动操作  1：自动操作
+
+	int64 createTime = 12;// 创建时间 时间戳
+
+	int64 triggerTime = 13;// 触发时间
+
+	int64 execTime = 14; //执行时间
+
+	int32 execStatus = 15;//执行状态 0：未执行  1：已执行  2：执行过期
+
+	int32 orderId = 16; //委托id
+	
+	int32 days = 17; //有效天数
+	
+	int64 expiredDay = 18;// 过期日期
+
+    string orderPriceType = 19; // 价格类型  lastest("最新价"), cost("成本价"),bid_1("买一价"),bid_2("买二价"),bid_3("买三价"), bid_4("买四价"),bid_5("买五价"),ask_1("卖一价"),ask_2("卖二价"),ask_3("卖三价"),ask_4("卖四价"),ask_5("卖五价"),high_limit("涨停价"),low_limit("跌停价"),
+
+	string floatPrice = 20;// 浮动价格
+
+	int32 orderMoneyType = 21;//  金额类型 1：按数量  2：按金额
+	
+	string orderMoney = 22;// 下单金额
+
+	int32 orderNum = 23;//下单数目
+	
+	int64 taskTime = 24;// 定时触发时间
+	
+	string realOrderPrice = 25;//实际委托价格
+	
+	string realOrderNum = 26;// 实际委托数目
+	
+	string execException = 27;// 执行错误信息
+	
+	string runStatusDesc = 28;// 运行状态 描述
+	
+	string triggerTypeDesc = 29;// 触发类型 描述
+	
+	string orderPriceTypeDesc = 30; //价格类型 描述
+	
+	string name = 31;// 股票名
+	
+	AccountInfoResp accountInfo = 32;//子账户 信息
+	
+	
+	
+}
+
+//添加、修改 条件单
+message ConditionOrderAddReq{
+
+	int32 id = 1; 
+	
+    string stockCode = 2; //股票代码 
+	
+	string suffix = 3; //交易所代码 
+	
+	int32 subAccountId = 4; //操作账号id
+
+	int32 tClientId = 5; //交易员id
+	
+	int32 orderType = 6;//下单类型  0：买入  1：卖出
+
+	int32 triggerType = 7;// 触发类型  1：涨幅条件  2：股价条件  3：反弹买入  4：定时  5：涨停买入  6：止盈止损
+
+	string triggerCondition = 8; // 触发条件
+
+
+	int32 triggerExecType = 9;//  触发后 操作方式  0：手动操作  1：自动操作
+
+	int32 days = 10; //有效天数
+	
+    string orderPriceType = 11; // 价格类型  lastest("最新价"), cost("成本价"),bid_1("买一价"),bid_2("买二价"),bid_3("买三价"), bid_4("买四价"),bid_5("买五价"),ask_1("卖一价"),ask_2("卖二价"),ask_3("卖三价"),ask_4("卖四价"),ask_5("卖五价"),high_limit("涨停价"),low_limit("跌停价"),
+
+	string floatPrice = 12;// 浮动价格
+
+	int32 orderMoneyType = 13;//  金额类型 1：按数量  2：按金额
+	
+	string orderMoney = 14;// 下单金额
+
+	int32 orderNum = 15;//下单数目
+	
+	
+}
+
+
+//条件单  添加 / 修改 响应
+message ConditionOrderAddResp {
+	ConditionOrder conditionOrder = 1;
+}
+
+
+//修改条件单状态 （批量）  请求
+message ConditionOrderChangeStatusReq{
+	repeated int32 idList = 1; //条件单 id 列表
+	int32 status = 2 ;// 状态   1：运行  2：暂停
+}
+
+
+//修改条件单状态 （批量） 响应
+message	ConditionOrderChangeStatusResp{
+	repeated int32 idList = 1; //条件单 id 列表
+	int32 status = 2 ;// 状态   1：运行  2：暂停
+}
+
+
+//删除条件单（批量）
+message ConditionOrderDeleteReq {
+
+	repeated int32 idList = 1; //条件单 id 列表
+	
+}
+
+//删除条件单（批量） 响应
+message ConditionOrderDeleteResp {
+
+	repeated int32 idList = 1; //条件单 id 列表
+	
+}
+   
+   
+//条件单 触发 推送
+message PushConditionOrderTriggerd {
+	ConditionOrder conditionOrder = 1;//触发的条件单
+}
+
+//条件单  确认  请求
+message ConditionOrderConfirmReq{
+	int32 id = 1;
+}
+
+
+//条件单 确认   响应
+message ConditionOrderConfirmResp{
+	ConditionOrder conditionOrder = 1;//条件单数据
+}
+	
+
+// 下单请求返回
+message BatchOrderResp
+{
+	
+   OrderResp.OrderRespType orderRespType =1;
+   string message = 2; //错误信息
+}
+
+
+//修改密码 
+message ChangePasswordReq{
+	string oldPassword = 1;//原密码
+	string newPasswword = 2;//新密码
+}
+
+
+
+
+
+ 
+//港股基本信息 响应类型：QUERY_HK_STOCK_INFO
+message HkStockInfoFieldResp{
+    //股票名称
+    string name=1;
+    //股票code
+    string code=2;
+    //股票后缀
+    string suffix=3;
+    //是否是沪港通  1是   0不是
+   string isSHHK=4;
+    //是否是深港通  1是  2不是
+    string isSZHK=5;
+    //每手多少股
+    int32 volumeMultiple=6;
+}
+
+//交易汇率查询 响应类型：QUERY_CONSULT_EXCHANGE_RATE
+message HkConsultExchangeRateFieldResp{
+    //深港通交易汇率
+    HkConsultExchangeRateField szConsultExchangeRate=1;
+    //沪港通交易汇率
+    HkConsultExchangeRateField shConsultExchangeRate=2;
+    // 深港通结算汇率
+    HkConsultExchangeRateField settleSzConsultExchangeRate=3;
+    //沪港通结算汇率
+    HkConsultExchangeRateField settleShConsultExchangeRate=4;
+}
+
+//交易汇率 
+message HkConsultExchangeRateField{
+    //参考买入汇率
+    string consultBuyingRate=1;
+    //参考卖出汇率
+    string consultSellingRate=2;
+
+}
+
+
+
+
+    

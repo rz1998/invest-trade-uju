@@ -1,0 +1,25 @@
+%module(directors="1") ctpUju
+%{
+#include "./api/v6.3.19_20200727_api-tradeapi_se_linux64/ThostFtdcUserApiDataType.h"
+#include "./api/v6.3.19_20200727_api-tradeapi_se_linux64/ThostFtdcUserApiStruct.h"
+#include "./api/v6.3.19_20200727_api-tradeapi_se_linux64/ThostFtdcTraderApi.h"
+#include "./api/v6.3.19_20200727_api-tradeapi_se_linux64/ThostFtdcMdApi.h"
+%}
+
+%feature("director") CThostFtdcMdSpi;
+%feature("director") CThostFtdcTraderSpi;
+
+
+%ignore THOST_FTDC_VTC_BankBankToFuture;
+%ignore THOST_FTDC_VTC_BankFutureToBank;
+%ignore THOST_FTDC_VTC_FutureBankToFuture;
+%ignore THOST_FTDC_VTC_FutureFutureToBank;
+%ignore THOST_FTDC_FTC_BankLaunchBankToBroker;
+%ignore THOST_FTDC_FTC_BrokerLaunchBankToBroker;
+%ignore THOST_FTDC_FTC_BankLaunchBrokerToBank;
+%ignore THOST_FTDC_FTC_BrokerLaunchBrokerToBank;
+
+%include "./api/v6.3.19_20200727_api-tradeapi_se_linux64/ThostFtdcUserApiDataType.h"
+%include "./api/v6.3.19_20200727_api-tradeapi_se_linux64/ThostFtdcUserApiStruct.h"
+%include "./api/v6.3.19_20200727_api-tradeapi_se_linux64/ThostFtdcTraderApi.h"
+%include "./api/v6.3.19_20200727_api-tradeapi_se_linux64/ThostFtdcMdApi.h"
