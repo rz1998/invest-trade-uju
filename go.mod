@@ -2,9 +2,7 @@ module github.com/rz1998/invest-trade-uju
 
 go 1.20
 
-replace (
-	github.com/zeromicro/go-zero v1.5.3 => github.com/suyuan32/simple-admin-tools v1.5.8
-)
+replace github.com/zeromicro/go-zero v1.5.3 => github.com/suyuan32/simple-admin-tools v1.5.8
 
 require (
 	github.com/golang/protobuf v1.5.3
